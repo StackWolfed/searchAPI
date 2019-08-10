@@ -42,7 +42,7 @@ func (app *App) searchFunction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rows, err := app.Database.Query("SELECT * FROM search WHERE name LIKE ?", r.FormValue("search"))
+	rows, err := app.Database.Query("SELECT * FROM search WHERE name LIKE CONCAT('%', ?, '%')", r.FormValue("search"))
 	checkError(err)
 
 	var result models.Items
@@ -50,7 +50,10 @@ func (app *App) searchFunction(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		err = rows.Scan(&tmp.ID, &tmp.Name, &tmp.URL)
 		if err != nil {
-			fmt.Println("Scan: %v", err)
+			fmt.Println("Error in Scan:")
+			fmt.Println(err)
+			http.Error(w, "An Error has occured", http.StatusInternalServerError)
+			return
 		}
 		result = append(result, tmp)
 	}
