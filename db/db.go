@@ -42,7 +42,7 @@ func CreateDatabase() (*sql.DB, error) {
 	}
 
 	// Preparing the table
-	stmt, err := db.Prepare("CREATE TABLE IF NOT EXISTS search (id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, name TEXT, url TEXT)")
+	stmt, err := db.Prepare("CREATE TABLE IF NOT EXISTS search (id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, lowerName TEXT, name TEXT, url TEXT)")
 	checkError(err)
 	_, err = stmt.Exec()
 	checkError(err)

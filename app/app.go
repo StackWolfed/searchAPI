@@ -42,13 +42,13 @@ func (app *App) searchFunction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rows, err := app.Database.Query("SELECT * FROM search WHERE name LIKE CONCAT('%', ?, '%')", r.FormValue("search"))
+	rows, err := app.Database.Query("SELECT * FROM search WHERE lowerName LIKE LOWER(CONCAT('%', ?, '%'))", r.FormValue("search"))
 	checkError(err)
 
 	var result models.Items
 	var tmp models.Item
 	for rows.Next() {
-		err = rows.Scan(&tmp.ID, &tmp.Name, &tmp.URL)
+		err = rows.Scan(&tmp.ID, &tmp.LowerName, &tmp.Name, &tmp.URL)
 		if err != nil {
 			fmt.Println("Error in Scan:")
 			fmt.Println(err)
@@ -67,7 +67,7 @@ func (app *App) searchFunction(w http.ResponseWriter, r *http.Request) {
 // /api/v1/addEntry route
 func (app *App) addEntry(w http.ResponseWriter, r *http.Request) {
 	// Check if entry already exists
-	stmt, err := app.Database.Prepare("SELECT name FROM search WHERE name = ?")
+	stmt, err := app.Database.Prepare("SELECT lowerName FROM search WHERE lowerName = LOWER(?)")
 	checkError(err)
 	// JSON Parsing
 	entry := parseBodyToEntry(r.Body)
@@ -86,9 +86,9 @@ func (app *App) addEntry(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Add the entry
-	stmt, err = app.Database.Prepare("INSERT INTO search (name, url) VALUES (?, ?)")
+	stmt, err = app.Database.Prepare("INSERT INTO search (lowerName, name, url) VALUES (LOWER(?), ?, ?)")
 	checkError(err)
-	res, err := stmt.Exec(entry.Name, entry.URL)
+	res, err := stmt.Exec(entry.Name, entry.Name, entry.URL)
 	checkError(err)
 	fmt.Println(res.RowsAffected())
 	fmt.Fprintf(w, "ok")
@@ -99,7 +99,7 @@ func (app *App) deleteEntry(w http.ResponseWriter, r *http.Request) {
 	// JSON Parsing
 	entry := parseBodyToEntry(r.Body)
 	// Check if exist and if it does, gets the ID
-	rows, err := app.Database.Query("SELECT id FROM search WHERE name = ?", entry.Name)
+	rows, err := app.Database.Query("SELECT id FROM search WHERE lowerName = LOWER(?)", entry.Name)
 	checkError(err)
 	if !rows.Next() {
 		http.Error(w, "entry does not exist", http.StatusBadRequest)
